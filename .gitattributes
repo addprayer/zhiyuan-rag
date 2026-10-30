@@ -1,0 +1,5 @@
+# Windows 批处理文件必须保持 CRLF 行尾。
+# 若被转换成 LF，cmd.exe 会把一行拆成多个命令片段，
+# 典型报错如 "'dp0.pylibs' 不是内部或外部命令"。
+*.bat -text
+*.cmd -text
