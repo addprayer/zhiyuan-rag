@@ -192,7 +192,7 @@ flowchart LR
 
 1. **文档入库**
    - 上传文件保存到 `data/uploads/`；
-   - `app/ingest.py` 解析文本：TXT/MD 直接读，PDF 用 `pypdf`（回退 `PyPDF2`），DOCX 用 `python-docx`；
+   - `app/ingest.py` 解析文本：TXT/MD 直接读，PDF 用 `PyPDF2`（若环境安装了 `pypdf` 会优先使用），DOCX 用 `python-docx`；
    - `app/chunking.py` 按标题/页码/段落/句子切分，带重叠；
    - `app/embeddings.py` 生成向量，`app/vector_store.py` 把 float32 向量打包成 BLOB 存入 SQLite `chunks` 表。
 
