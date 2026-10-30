@@ -30,6 +30,14 @@ BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_PORT = 8000
 HEALTH_PATH = "/api/health"
 
+# 开发环境可能把依赖放在项目同级的 .pylibs（而不是项目内），
+# 这里把两种位置都加入 sys.path，双击启动时也能直接找到 fastapi/uvicorn。
+for _libs_dir in (BASE_DIR / ".pylibs", BASE_DIR.parent / ".pylibs"):
+    if _libs_dir.is_dir():
+        _libs_path = str(_libs_dir)
+        if _libs_path not in sys.path:
+            sys.path.insert(0, _libs_path)
+
 BG = "#F7F8FA"
 SURFACE = "#FFFFFF"
 INK = "#101828"
@@ -359,6 +367,9 @@ class Launcher:
         env["PYTHONUNBUFFERED"] = "1"
         env["PYTHONIOENCODING"] = "utf-8"
         python_path = [str(BASE_DIR), str(BASE_DIR / ".pylibs")]
+        parent_libs = BASE_DIR.parent / ".pylibs"
+        if parent_libs.is_dir():
+            python_path.append(str(parent_libs))
         if env.get("PYTHONPATH"):
             python_path.append(env["PYTHONPATH"])
         env["PYTHONPATH"] = os.pathsep.join(python_path)
