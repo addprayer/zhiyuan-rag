@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>知源 · 企业知识库问答</title>
+  <meta name="description" content="基于 RAG 的企业知识库问答系统，先检索、再回答，并标注来源。">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-settings" viewBox="0 0 24 24">
+      <path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M8 14v6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24">
+      <path d="M4 7h16M4 12h16M4 17h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24">
+      <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-close" viewBox="0 0 24 24">
+      <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24">
+      <path d="M12 16V5M8 9l4-4 4 4M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24">
+      <path d="M5 7h14M9 7V5h6v2M7 7l1 12h8l1-12M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-send" viewBox="0 0 24 24">
+      <path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24">
+      <path d="M12 4l8 4-8 4-8-4 8-4ZM4 12l8 4 8-4M4 16l8 4 8-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24">
+      <path d="M19 12a7 7 0 1 1-2.05-4.95M19 5v4h-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </svg>
+
+  <div class="app">
+    <header class="topbar">
+      <button id="menuBtn" class="icon-btn menu-btn" aria-label="打开知识库列表">
+        <svg><use href="#i-menu"></use></svg>
+      </button>
+      <a class="brand" href="/" aria-label="知源首页">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <rect x="1" y="1" width="30" height="30" rx="6" fill="currentColor"/>
+            <path d="M10 8v16" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="10" cy="11" r="1.7" fill="#fff"/>
+            <circle cx="10" cy="16" r="1.7" fill="#fff"/>
+            <circle cx="10" cy="21" r="1.7" fill="#fff"/>
+            <path d="M15 11h8M15 16h8M15 21h5" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".82"/>
+          </svg>
+        </span>
+        <span class="brand-word"><strong>知源</strong><span>ZhiYuan</span></span>
+      </a>
+      <p class="topbar-note">企业内部知识库 · 回答可追溯</p>
+      <div class="topbar-actions">
+        <span id="modeBadge" class="mode-badge demo">演示模式</span>
+        <button id="settingsBtn" class="icon-btn" aria-label="打开设置" title="设置">
+          <svg><use href="#i-settings"></use></svg>
+        </button>
+      </div>
+    </header>
+
+    <aside class="rail" id="rail" aria-label="知识库导航">
+      <div class="rail-scroll">
+        <section class="rail-section">
+          <div class="rail-head">
+            <h2>知识库</h2>
+            <button id="newKbBtn" class="icon-btn small" aria-label="新建知识库" title="新建知识库">
+              <svg><use href="#i-plus"></use></svg>
+            </button>
+          </div>
+          <div id="kbList" class="kb-list"></div>
+        </section>
+
+        <section class="rail-section docs-section">
+          <div class="rail-head">
+            <h2>文档</h2>
+            <button id="uploadBtn" class="text-btn" type="button">
+              <svg class="tiny"><use href="#i-upload"></use></svg>上传
+            </button>
+            <input id="fileInput" type="file" multiple hidden
+                   accept=".pdf,.docx,.md,.markdown,.txt">
+          </div>
+          <div id="docList" class="doc-list"></div>
+        </section>
+
+        <section class="rail-section history-section">
+          <div class="rail-head">
+            <h2>最近对话</h2>
+            <button id="newChatBtn" class="text-btn" type="button">新对话</button>
+          </div>
+          <div id="convList" class="conv-list"></div>
+        </section>
+      </div>
+      <footer class="rail-foot">
+        <span class="dot"></span>
+        <span id="railFootText">本地索引 · 数据不出内网</span>
+      </footer>
+    </aside>
+
+    <main class="stage">
+      <header class="stage-head">
+        <div class="stage-title">
+          <p class="stage-kicker" id="stageKicker">知识库</p>
+          <h1 id="stageName">正在载入…</h1>
+          <p class="stage-meta" id="stageMeta"> </p>
+        </div>
+        <div class="stage-actions">
+          <button id="evidenceToggle" class="evidence-toggle" type="button">
+            <svg class="tiny"><use href="#i-layers"></use></svg>
+            来源 <span id="evidenceToggleCount">0</span>
+          </button>
+        </div>
+      </header>
+
+      <div id="reindexBar" class="reindex-bar" hidden>
+        <span>Embedding 配置已变更，旧文档需要重建索引后才能检索。</span>
+        <button id="reindexBtn" class="text-btn strong" type="button">
+          <svg class="tiny"><use href="#i-refresh"></use></svg>重建索引
+        </button>
+      </div>
+
+      <div id="thread" class="thread" aria-live="polite"></div>
+
+      <div class="composer-shell">
+        <form id="composer" class="composer" autocomplete="off">
+          <textarea id="question" rows="1" placeholder="问点什么，答案会带上出处…"
+                    aria-label="输入问题" maxlength="2000"></textarea>
+          <div class="composer-bar">
+            <span class="composer-hint">Enter 发送 · Shift + Enter 换行</span>
+            <button id="sendBtn" class="send-btn" type="submit">
+              <span>发送</span>
+              <svg><use href="#i-send"></use></svg>
+            </button>
+          </div>
+        </form>
+        <p class="composer-note">回答仅基于当前知识库，点击引用编号可查看原文。</p>
+      </div>
+
+      <div id="dropOverlay" class="drop-overlay" hidden>
+        <div class="drop-card">
+          <svg><use href="#i-upload"></use></svg>
+          <strong>松开上传到当前知识库</strong>
+          <span>支持 PDF、Word、Markdown、TXT，单个不超过 20 MB</span>
+        </div>
+      </div>
+    </main>
+
+    <aside class="evidence" id="evidence" aria-label="引用来源">
+      <div class="evidence-head">
+        <div>
+          <h2>来源</h2>
+          <p id="evidenceSub">回答中的编号对应这里的片段</p>
+        </div>
+        <span id="evidenceCount" class="count">0</span>
+        <button id="evidenceClose" class="icon-btn small evidence-close" aria-label="关闭来源面板">
+          <svg><use href="#i-close"></use></svg>
+        </button>
+      </div>
+      <div id="evidenceList" class="evidence-list"></div>
+    </aside>
+  </div>
+
+  <div id="scrim" class="scrim" hidden></div>
+
+  <div id="settingsModal" class="modal-backdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <header class="modal-head">
+        <div>
+          <h2 id="settingsTitle">设置</h2>
+          <p>模型、向量与检索参数</p>
+        </div>
+        <button class="icon-btn" data-close="settingsModal" aria-label="关闭设置">
+          <svg><use href="#i-close"></use></svg>
+        </button>
+      </header>
+      <form id="settingsForm" class="modal-body">
+        <section class="form-section">
+          <div class="section-head">
+            <h3>大模型</h3>
+            <button type="button" class="text-btn strong" id="testLlmBtn">测试连接</button>
+          </div>
+          <p class="section-note">兼容 OpenAI 协议的对话接口。未填写 Key 时，系统以演示模式运行。</p>
+          <div class="field-grid">
+            <label class="field span-2">
+              <span>接口地址</span>
+              <input name="llm_base_url" type="url" placeholder="https://api.deepseek.com/v1">
+            </label>
+            <label class="field">
+              <span>模型</span>
+              <input name="llm_model" type="text" placeholder="deepseek-chat">
+            </label>
+            <label class="field">
+              <span>API Key</span>
+              <span class="key-row">
+                <input name="llm_api_key" type="password" placeholder="sk-…" autocomplete="off">
+                <button type="button" class="clear-key" data-key="llm">清除</button>
+              </span>
+            </label>
+            <label class="field">
+              <span>温度</span>
+              <input name="llm_temperature" type="number" min="0" max="2" step="0.1">
+            </label>
+            <label class="field">
+              <span>最大输出 tokens</span>
+              <input name="llm_max_tokens" type="number" min="64" max="8192" step="64">
+            </label>
+          </div>
+          <p id="testLlmResult" class="test-result" hidden></p>
+        </section>
+
+        <section class="form-section">
+          <div class="section-head">
+            <h3>Embedding</h3>
+            <button type="button" class="text-btn strong" id="testEmbeddingBtn">测试连接</button>
+          </div>
+          <p class="section-note">本地模式开箱即用；接入 API 可获得更强的语义检索，切换后需重建索引。</p>
+          <div class="segmented" role="radiogroup" aria-label="Embedding 模式">
+            <label><input type="radio" name="embedding_provider" value="local"><span>本地哈希 · 768 维</span></label>
+            <label><input type="radio" name="embedding_provider" value="openai"><span>OpenAI 兼容 API</span></label>
+          </div>
+          <div id="embeddingApiFields" class="field-grid" hidden>
+            <label class="field span-2">
+              <span>接口地址</span>
+              <input name="embedding_base_url" type="url" placeholder="https://api.openai.com/v1">
+            </label>
+            <label class="field">
+              <span>模型</span>
+              <input name="embedding_model" type="text" placeholder="text-embedding-3-small">
+            </label>
+            <label class="field">
+              <span>API Key</span>
+              <span class="key-row">
+                <input name="embedding_api_key" type="password" placeholder="sk-…" autocomplete="off">
+                <button type="button" class="clear-key" data-key="embedding">清除</button>
+              </span>
+            </label>
+          </div>
+          <p id="testEmbeddingResult" class="test-result" hidden></p>
+        </section>
+
+        <section class="form-section">
+          <h3>检索</h3>
+          <p class="section-note">混合检索会同时使用向量相似度与关键词 BM25。片段越多，召回越广，但生成成本也越高。</p>
+          <div class="field-grid three">
+            <label class="field">
+              <span>引用片段数</span>
+              <input name="top_k" type="number" min="1" max="12" step="1">
+            </label>
+            <label class="field">
+              <span>片段长度</span>
+              <input name="chunk_size" type="number" min="200" max="2000" step="20">
+            </label>
+            <label class="field">
+              <span>重叠长度</span>
+              <input name="chunk_overlap" type="number" min="0" max="500" step="10">
+            </label>
+          </div>
+          <label class="field range-field">
+            <span>向量权重 <output id="alphaOutput">0.65</output></span>
+            <input name="hybrid_alpha" type="range" min="0" max="1" step="0.05">
+            <span class="range-legend"><span>关键词</span><span>向量</span></span>
+          </label>
+        </section>
+
+        <p id="settingsError" class="form-error" hidden></p>
+      </form>
+      <footer class="modal-foot">
+        <span id="settingsSaved" class="saved-note" hidden>已保存</span>
+        <button type="button" class="ghost-btn" data-close="settingsModal">取消</button>
+        <button type="submit" form="settingsForm" class="primary-btn" id="saveSettingsBtn">保存设置</button>
+      </footer>
+    </div>
+  </div>
+
+  <div id="kbModal" class="modal-backdrop" hidden>
+    <div class="modal narrow" role="dialog" aria-modal="true" aria-labelledby="kbTitle">
+      <header class="modal-head">
+        <div>
+          <h2 id="kbTitle">新建知识库</h2>
+          <p>为一个主题或部门建立独立的检索空间</p>
+        </div>
+        <button class="icon-btn" data-close="kbModal" aria-label="关闭">
+          <svg><use href="#i-close"></use></svg>
+        </button>
+      </header>
+      <form id="kbForm" class="modal-body">
+        <label class="field">
+          <span>名称</span>
+          <input name="name" type="text" maxlength="60" placeholder="例如：产品手册" required>
+        </label>
+        <label class="field">
+          <span>说明</span>
+          <textarea name="description" rows="3" maxlength="240" placeholder="这个知识库收录什么内容？"></textarea>
+        </label>
+        <p id="kbError" class="form-error" hidden></p>
+      </form>
+      <footer class="modal-foot">
+        <button type="button" class="ghost-btn" data-close="kbModal">取消</button>
+        <button type="submit" form="kbForm" class="primary-btn" id="createKbBtn">创建</button>
+      </footer>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

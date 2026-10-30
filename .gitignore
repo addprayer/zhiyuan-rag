@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments and local wheels
+.venv/
+venv/
+.pylibs/
+
+# Runtime data (SQLite, uploads, local settings, logs)
+data/*
+!data/.gitkeep
+*.log
+
+# Local scratch files
+tmp_smoke.txt
+tmp_*
+.pip-tmp/
+.pytest-tmp/
+pytest-cache-files-*/
+tests/_work/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
