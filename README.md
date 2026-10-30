@@ -85,6 +85,8 @@ python -m pip install -r requirements.txt
 
 在启动窗口中点击「启动服务」，服务就绪后会自动打开浏览器。关闭窗口时会停止由它启动的本地服务。
 
+![知源启动窗口](docs/launcher.png)
+
 也可以用命令行打开启动窗口：
 
 ```powershell
